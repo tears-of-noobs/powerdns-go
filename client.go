@@ -161,12 +161,16 @@ func (client *PowerDNSClient) GetZone(
 func (client *PowerDNSClient) UpdateZone(
 	server string,
 	zone string,
-	zonePayload *Zone,
+	rrSetsPayload []*RRSet,
 ) error {
 	var payload []byte
 	payloadBuffer := bytes.NewBuffer(payload)
 
-	err := json.NewEncoder(payloadBuffer).Encode(zonePayload)
+	err := json.NewEncoder(payloadBuffer).Encode(
+		map[string][]*RRSet{
+			"rrsets": rrSetsPayload,
+		},
+	)
 	if err != nil {
 		return err
 	}
