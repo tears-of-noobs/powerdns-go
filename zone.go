@@ -28,7 +28,7 @@ type Zone struct {
 	BasicZoneInfo
 	Nameservers []string `json:"nameservers,omitempty"`
 	Servers     []string `json:"servers,omitempty"`
-	RRSSets     []RRSet  `json:"rrsets,omitempty"`
+	RRSets      []RRSet  `json:"rrsets,omitempty"`
 	SOAEdit     string   `json:"soa_edit,omitempty"`
 	SOAEditAPI  string   `json:"soa_edit_api,omitempty"`
 }
