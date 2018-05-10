@@ -18,29 +18,34 @@ const (
 	apiResourceZones   string = "zones"
 )
 
-type PowerDNSClient struct {
+// Client - represents a PowerDNS metadata which needs to
+// interact with PowerDNS server
+type Client struct {
 	apiKey     string
 	dnsDSN     string
 	apiVer     string
 	httpClient *http.Client
 }
 
-func NewPowerDNSClient(
+// NewClient - create new object of Client
+func NewClient(
 	dnsDSN string,
 	apiKey string,
 	apiVer string,
-) *PowerDNSClient {
+) *Client {
 
 	if apiVer == "" {
 		apiVer = apiDefaultVersion
 	}
 
-	return &PowerDNSClient{
+	return &Client{
 		apiKey, dnsDSN, apiVer, &http.Client{},
 	}
 }
 
-func (client *PowerDNSClient) GetServers() ([]*Server, error) {
+// GetServers - return all servers which confugured
+// in PowerDNS
+func (client *Client) GetServers() ([]*Server, error) {
 	request, err := client.makeRequest(
 		http.MethodGet,
 		client.makeRequestURL(apiResourceServers),
@@ -65,7 +70,8 @@ func (client *PowerDNSClient) GetServers() ([]*Server, error) {
 	return servers, err
 }
 
-func (client *PowerDNSClient) GetServer(
+// GetServer - return server by name
+func (client *Client) GetServer(
 	name string,
 ) (*Server, error) {
 	request, err := client.makeRequest(
@@ -92,9 +98,11 @@ func (client *PowerDNSClient) GetServer(
 	return server, err
 }
 
-func (client *PowerDNSClient) GetZones(
+// GetZones - return reduced representation of exists zones in
+// PowerDNS server, without RRSet's.
+func (client *Client) GetZones(
 	server string,
-) ([]*BasicZoneInfo, error) {
+) ([]*Zone, error) {
 	request, err := client.makeRequest(
 		http.MethodGet,
 		client.makeRequestURL(
@@ -114,7 +122,7 @@ func (client *PowerDNSClient) GetZones(
 	}
 	defer response.Body.Close()
 
-	zones := []*BasicZoneInfo{}
+	zones := []*Zone{}
 
 	err = client.checkAndDecodeResponse(
 		response,
@@ -124,7 +132,8 @@ func (client *PowerDNSClient) GetZones(
 	return zones, err
 }
 
-func (client *PowerDNSClient) GetZone(
+// GetZone - return zone by zone name.
+func (client *Client) GetZone(
 	server string,
 	zone string,
 ) (*Zone, error) {
@@ -158,16 +167,17 @@ func (client *PowerDNSClient) GetZone(
 	return dnsZone, err
 }
 
-func (client *PowerDNSClient) UpdateZone(
+// UpdateZone - update zone with passed RRSet
+func (client *Client) UpdateZone(
 	server string,
 	zone string,
-	rrSetsPayload []*RRSet,
+	rrSetsPayload []RRSet,
 ) error {
 	var payload []byte
 	payloadBuffer := bytes.NewBuffer(payload)
 
 	err := json.NewEncoder(payloadBuffer).Encode(
-		map[string][]*RRSet{
+		map[string][]RRSet{
 			"rrsets": rrSetsPayload,
 		},
 	)
@@ -202,7 +212,7 @@ func (client *PowerDNSClient) UpdateZone(
 
 }
 
-func (client *PowerDNSClient) makeRequestURL(
+func (client *Client) makeRequestURL(
 	resources ...string,
 ) string {
 
@@ -219,7 +229,7 @@ func (client *PowerDNSClient) makeRequestURL(
 	)
 }
 
-func (client *PowerDNSClient) makeRequest(
+func (client *Client) makeRequest(
 	method string,
 	url string,
 	payload io.Reader,
@@ -237,7 +247,7 @@ func (client *PowerDNSClient) makeRequest(
 	return request, nil
 }
 
-func (client *PowerDNSClient) executeRequest(
+func (client *Client) executeRequest(
 	request *http.Request,
 ) (*http.Response, error) {
 	response, err := client.httpClient.Do(request)
@@ -253,11 +263,11 @@ func (client *PowerDNSClient) executeRequest(
 	return response, err
 }
 
-func (client *PowerDNSClient) checkAndDecodeResponse(
+func (client *Client) checkAndDecodeResponse(
 	response *http.Response,
 	successAnswer interface{},
 ) error {
-	errorAnswer := &PowerDNSAPIError{}
+	errorAnswer := &APIError{}
 
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated:
