@@ -1,5 +1,7 @@
 package powerdns
 
+// Server - represent `Servers` resource
+// https://doc.powerdns.com/md/httpapi/api_spec/#servers
 type Server struct {
 	ConfigURL  string `json:"config_url"`
 	DaemonType string `json:"daemon_type"`
