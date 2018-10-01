@@ -1,5 +1,7 @@
 package powerdns
 
+import "strings"
+
 type changetype string
 
 const (
@@ -45,50 +47,46 @@ type Zone struct {
 	SOAEditAPI  string   `json:"soa_edit_api,omitempty"`
 }
 
-// GetRecords - find and return records filtered by
-// name or recordType or content
-func (zone *Zone) GetRecords(
-	name string,
-	recordType RecordType,
-	content []string,
+// QueryRecords - find and return records filtered by
+// name or content
+func (zone *Zone) QueryRecords(
+	query string,
 ) []RRSet {
-	var rrSets []RRSet
+	var (
+		rrSets   []RRSet
+		wildcard = len(query) == 0
+	)
 
 	for _, rrSet := range zone.RRSets {
-		var (
-			hasName    = true
-			hasType    = true
-			hasContent = true
-		)
-
-		if name != "" {
-			hasName = name == rrSet.Name
+		if wildcard {
+			rrSets = append(rrSets, rrSet)
+			continue
 		}
 
-		if recordType != "" {
-			hasType = recordType == rrSet.Type
-		}
+		for _, record := range rrSet.Records {
+			hasContent := false
 
-		if len(content) != 0 {
-			for _, record := range rrSet.Records {
-				for _, c := range content {
-					if c == record.Content {
-						hasContent = true
-						break
-					}
-				}
+			if strings.Contains(
+				record.Content,
+				query,
+			) {
+				rrSets = append(rrSets, rrSet)
+				hasContent = true
+			}
 
-				if hasContent {
-					break
-				}
+			if hasContent {
+				break
 			}
 
 		}
 
-		if hasName && hasType && hasContent {
-
+		if strings.Contains(
+			rrSet.Name,
+			query,
+		) {
 			rrSets = append(rrSets, rrSet)
 		}
+
 	}
 
 	return rrSets
