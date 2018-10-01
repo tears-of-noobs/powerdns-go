@@ -61,13 +61,14 @@ func (zone *Zone) QueryRecords(
 	)
 
 	for _, rrSet := range zone.RRSets {
+		hasContent := false
+
 		if wildcard {
 			rrSets = append(rrSets, rrSet)
 			continue
 		}
 
 		for _, record := range rrSet.Records {
-			hasContent := false
 
 			if strings.Contains(
 				record.Content,
@@ -87,7 +88,9 @@ func (zone *Zone) QueryRecords(
 			rrSet.Name,
 			query,
 		) {
-			rrSets = append(rrSets, rrSet)
+			if !hasContent {
+				rrSets = append(rrSets, rrSet)
+			}
 		}
 
 	}
@@ -95,7 +98,7 @@ func (zone *Zone) QueryRecords(
 	return rrSets
 }
 
-// GetSOARecords - returns SOA record of zone
+// GetSOARecord - returns SOA record of the zone
 func (zone *Zone) GetSOARecord() (RRSet, error) {
 	var (
 		rrSets []RRSet
