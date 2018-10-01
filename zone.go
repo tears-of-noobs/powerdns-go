@@ -1,6 +1,9 @@
 package powerdns
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type changetype string
 
@@ -90,4 +93,37 @@ func (zone *Zone) QueryRecords(
 	}
 
 	return rrSets
+}
+
+// GetSOARecords - returns SOA record of zone
+func (zone *Zone) GetSOARecord() (RRSet, error) {
+	var (
+		rrSets []RRSet
+	)
+
+	for _, rrSet := range zone.RRSets {
+		if rrSet.Type == TypeSOA {
+			rrSets = append(rrSets, rrSet)
+		}
+	}
+
+	if len(rrSets) == 0 {
+		return RRSet{}, fmt.Errorf(
+			"can't find any %s record for zone %s",
+			TypeSOA,
+			zone.Name,
+		)
+	}
+
+	if len(rrSets) > 1 {
+		return RRSet{}, fmt.Errorf(
+			"must be only the one %s record for zone %s, but %d exists",
+			TypeSOA,
+			zone.Name,
+			len(rrSets),
+		)
+	}
+
+	return rrSets[0], nil
+
 }
