@@ -50,6 +50,26 @@ type Zone struct {
 	SOAEditAPI  string   `json:"soa_edit_api,omitempty"`
 }
 
+// QueryRecordsByName - returns records filtered only by name
+func (zone *Zone) QueryRecordsByName(
+	name string,
+) []RRSet {
+	var (
+		rrSets []RRSet
+	)
+
+	for _, rrSet := range zone.RRSets {
+		if strings.Contains(
+			rrSet.Name,
+			name,
+		) {
+			rrSets = append(rrSets, rrSet)
+		}
+	}
+
+	return rrSets
+}
+
 // QueryRecords - find and return records filtered by
 // name or content
 func (zone *Zone) QueryRecords(
