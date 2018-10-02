@@ -53,18 +53,26 @@ type Zone struct {
 // QueryRecordsByName - returns records filtered only by name
 func (zone *Zone) QueryRecordsByName(
 	name string,
+	contains bool,
 ) []RRSet {
 	var (
 		rrSets []RRSet
 	)
 
 	for _, rrSet := range zone.RRSets {
-		if strings.Contains(
-			rrSet.Name,
-			name,
-		) {
-			rrSets = append(rrSets, rrSet)
+		if contains {
+			if strings.Contains(
+				rrSet.Name,
+				name,
+			) {
+				rrSets = append(rrSets, rrSet)
+			}
+		} else {
+			if rrSet.Name == name {
+				rrSets = append(rrSets, rrSet)
+			}
 		}
+
 	}
 
 	return rrSets
@@ -74,6 +82,7 @@ func (zone *Zone) QueryRecordsByName(
 // name or content
 func (zone *Zone) QueryRecords(
 	query string,
+	contains bool,
 ) []RRSet {
 	var (
 		rrSets   []RRSet
@@ -90,12 +99,19 @@ func (zone *Zone) QueryRecords(
 
 		for _, record := range rrSet.Records {
 
-			if strings.Contains(
-				record.Content,
-				query,
-			) {
-				rrSets = append(rrSets, rrSet)
-				hasContent = true
+			if contains {
+				if strings.Contains(
+					record.Content,
+					query,
+				) {
+					rrSets = append(rrSets, rrSet)
+					hasContent = true
+				}
+			} else {
+				if query == record.Content {
+					rrSets = append(rrSets, rrSet)
+					hasContent = true
+				}
 			}
 
 			if hasContent {
@@ -104,11 +120,17 @@ func (zone *Zone) QueryRecords(
 
 		}
 
-		if strings.Contains(
-			rrSet.Name,
-			query,
-		) {
-			if !hasContent {
+		if contains {
+			if strings.Contains(
+				rrSet.Name,
+				query,
+			) {
+				if !hasContent {
+					rrSets = append(rrSets, rrSet)
+				}
+			}
+		} else {
+			if query == rrSet.Name {
 				rrSets = append(rrSets, rrSet)
 			}
 		}
